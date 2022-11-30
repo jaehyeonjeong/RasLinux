@@ -39,7 +39,8 @@ int main(int argc, char** argv) {
 	int i, j, size; 
 	int xFactor = 2, yFactor = 2; 
 	float srcX, srcY;
-	int index; 
+	int x, y, z;
+	int elemSize, index; 
 	float r,g,b,gray;
 	int graysize; 
 	int index2;
@@ -86,13 +87,43 @@ int main(int argc, char** argv) {
 	
 	fclose(fp);
 	
-	for(i=0; i<height*3; i+=3) { 
-		for(j=0; j<width*3; j+=3) {
-			outimg[(j*xFactor)+(width*xFactor*i*yFactor)]=inimg[j+(i*width)]; 
-			outimg[(j*xFactor)+(width*xFactor*i*yFactor)+1]=inimg[j+(i*width)+1]; 
-			outimg[(j*xFactor)+(width*xFactor*i*yFactor)+2]=inimg[j+(i*width)+2];
-		};
-	 };	  
+	//평균값을 이용한 보간법 만들기
+	/*
+	for(i=0; i<height*3+1; i+=3) { 
+		for(j=0; j<width*3+1; j+=3) {
+			outimg[(j*xFactor)+(width*xFactor*i*yFactor)] = inimg[j+(i*width)]; 
+			outimg[(j*xFactor)+(width*xFactor*i*yFactor)+1] = inimg[j+(i*width)+1];
+			outimg[(j*xFactor)+(width*xFactor*i*yFactor)+2] = inimg[j+(i*width)+2];
+			outimg[(j*xFactor/2)*width+(width*xFactor*i*yFactor)] = inimg[j/2+(i*width)];
+			outimg[(j*xFactor/2)*width+(width*xFactor*i*yFactor)+1] = inimg[j/2+(i*width)+1];
+			outimg[(j*xFactor/2)*width+(width*xFactor*i*yFactor)+2] = inimg[j/2+(i*width)+2];
+			outimg[(j*xFactor)+(width*xFactor*i*yFactor/2)] = inimg[j+(i/2*width)];
+            outimg[(j*xFactor)+(width*xFactor*i*yFactor/2)+1] = inimg[j+(i/2*width)+1];
+			outimg[(j*xFactor)+(width*xFactor*i*yFactor/2)+2] = inimg[j+(i/2*width)+2];
+			outimg[(j*xFactor/2)*width+(width*xFactor*i*yFactor)] = inimg[j/2+(i/2*width)];
+			outimg[(j*xFactor/2)*width+(width*xFactor*i*yFactor)+1]=inimg[j/2+(i/2*width)+1];
+			outimg[(j*xFactor/2)*width+(width*xFactor*i*yFactor)+2]=inimg[j/2+(i/2*width)+2];
+		}
+	 }*/
+	elemSize = 3;
+    for(y = 0; y < height*elemSize; y+=elemSize) { 
+        for(x = 0; x < width*elemSize; x+=elemSize) {
+            for(z = 0; z < elemSize; z++) {
+				//평균값을 이용한 보간법
+               /* int e1 = inimg[x+(y*width)+z];
+				int e2 = inimg[x+(y*width)+z+elemSize];
+				int e3 = inimg[x+((y+elemSize)*width)+z];
+				int e4 = inimg[x+((y+elemSize)*width)+z+elemSize];*/
+                //outimg[(x)+(width*y)+z]=e;
+				//최근 이웃 보간법
+				int e = inimg[x+(y*width)+z];
+                outimg[(x+(width*y*yFactor))*xFactor+z]=e;		//e1
+                outimg[(x+(width*y*yFactor))*xFactor+z+elemSize]=e; //(e1+e2)>>1
+                outimg[(x+(width*(y*yFactor+elemSize)))*xFactor+z]=e;		//(e1+e3)>>1
+                outimg[(x+(width*(y*yFactor+elemSize)))*xFactor+z+elemSize]=e; //(e1+e2+e3+e4)>>2
+            }
+        }
+     }      
 	
 	width*=xFactor, height*=yFactor; 
 	size=widthbytes(bits*width); 
