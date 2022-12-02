@@ -9,6 +9,17 @@
 /* 이미지 데이터의 경계 검사를 위한 매크로 */
 #define LIMIT_UBYTE(n) ((n)>UCHAR_MAX)?UCHAR_MAX:((n)<0)?0:(n)
 
+typedef struct _bitData {
+    unsigned int _1:1;
+    unsigned int _2:1;
+    unsigned int _3:1;
+    unsigned int _4:1;
+    unsigned int _5:1;
+    unsigned int _6:1;
+    unsigned int _7:1;
+    unsigned int _8:1;
+} bitData;
+
 typedef unsigned char ubyte;
 
 int main(int argc, char** argv) 
@@ -18,7 +29,7 @@ int main(int argc, char** argv)
     BITMAPINFOHEADER bmpInfoHeader;     /* BMP IMAGE INFO */
     RGBQUAD *palrgb;
     ubyte *inimg, *outimg;
-    int x, y, z, elemSize;
+    int x, y, z, imageSize;
 
     if(argc != 3) {
         fprintf(stderr, "usage : %s input.bmp output.bmp\n", argv[0]);
@@ -44,13 +55,14 @@ int main(int argc, char** argv)
         return -1;
     }
 #endif 
-    if(bmpInfoHeader.SizeImage != 0)
-         bmpInfoHeader.SizeImage = widthBytes(bmpInfoHeader.biBitCount * bmpInfoHeader.biWidth) *  bmpInfoHeader.biHeight; 
+    if(imageSize != 0)
+        imageSize = widthBytes(bmpInfoHeader.biBitCount * bmpInfoHeader.biWidth) * 
+                           bmpInfoHeader.biHeight; 
 
     /* 이미지의 해상도(넓이 × 깊이) */
     printf("Resolution : %d x %d\n", bmpInfoHeader.biWidth, bmpInfoHeader.biHeight);
     printf("Bit Count : %d\n", bmpInfoHeader.biBitCount);     /* 픽셀당 비트 수(색상) */
-    printf("Image Size : %d\n", bmpInfoHeader.SizeImage );
+    printf("Image Size : %d\n", imageSize);
     printf("Color : %d\n", bmpInfoHeader.biClrUsed);
 
     palrgb = (RGBQUAD*)malloc(sizeof(RGBQUAD)*bmpInfoHeader.biClrUsed);
@@ -61,21 +73,28 @@ int main(int argc, char** argv)
                               palrgb[i].rgbRed, palrgb[i].rgbReserved);
     //printf("%d %d\n", sizeof(BITMAPFILEHEADER), sizeof(BITMAPINFOHEADER));
 
-    inimg = (ubyte*)malloc(sizeof(ubyte)*bmpInfoHeader.SizeImage ); 
+    inimg = (ubyte*)malloc(sizeof(ubyte)*imageSize); 
     outimg = (ubyte*)malloc(sizeof(ubyte)*(bmpInfoHeader.biWidth*bmpInfoHeader.biHeight*3));
-	fseek(fp, bmpHeader.bfOffBits, SEEK_SET);
-    fread(inimg, sizeof(ubyte), bmpInfoHeader.SizeImage , fp); 
+    fread(inimg, sizeof(ubyte), imageSize, fp); 
     
     fclose(fp);
     
-    elemSize = 3; //bmpInfoHeader.biBitCount / 8;
+    float elemSize = bmpInfoHeader.biBitCount / 8.;
     int pos = 0; 
-
-	//x는 1픽셀의 8분의 1만큼 들어갈 매핑 배열
-    for(x = 0; x < bmpInfoHeader.biWidth*bmpInfoHeader.biHeight/8; x++) { 
+    for(x = 0; x < bmpInfoHeader.biWidth*bmpInfoHeader.biHeight*elemSize; x++) { 
+        bitData data;
+        ubyte num = inimg[x]; 
+        memcpy(&data, &num, sizeof(ubyte));
+        printf("%d ", data._1);
+        printf("%d ", data._2);
+        printf("%d ", data._3);
+        printf("%d ", data._4);
+        printf("%d ", data._5);
+        printf("%d ", data._6);
+        printf("%d ", data._7);
+        printf("%d \n", data._8);
         for(int i = 7; i >= 0; --i) { //8자리 숫자까지 나타냄
-             int num = inimg[x]; 		//매핑에 들어갈 num변수
-             int res = num >> i & 1;	//0b00000001 의 마스킹
+             ubyte res = num >> i & 0b00000001;
              outimg[pos++]=palrgb[res].rgbBlue;
              outimg[pos++]=palrgb[res].rgbGreen;
              outimg[pos++]=palrgb[res].rgbRed;
@@ -88,13 +107,11 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    bmpInfoHeader.biBitCount = 24;	//처리과정을 마친 이미지의 비트 수
-	bmpInfoHeader.SizeImage = bmpInfoHeader.biWidth*bmpInfoHeader.biHeight*3;
-	//이미지의 사이즈를 재정의
-    bmpInfoHeader.biClrUsed = 0; //팔레트를 사용하지 않는 다는 의미
-    bmpHeader.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + bmpInfoHeader.SizeImage; 			//이미지의 버퍼 사이즈 재정의
+    bmpInfoHeader.biBitCount = 24;
+	  bmpInfoHeader.SizeImage = bmpInfoHeader.biWidth*bmpInfoHeader.biHeight*3;
+    bmpInfoHeader.biClrUsed = 0;
+    bmpHeader.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + bmpInfoHeader.SizeImage;
     bmpHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
-	//이미지의 비트버퍼 재정의
     
     /* BITMAPFILEHEADER 구조체의 데이터 */
     fwrite(&bmpHeader, sizeof(BITMAPFILEHEADER), 1, fp);
@@ -102,7 +119,7 @@ int main(int argc, char** argv)
     /* BITMAPINFOHEADER 구조체의 데이터 */
     fwrite(&bmpInfoHeader, sizeof(BITMAPINFOHEADER), 1, fp);
 
-    fwrite(outimg, sizeof(ubyte), bmpInfoHeader.SizeImage, fp);
+    fwrite(outimg, sizeof(unsigned char), bmpInfoHeader.SizeImage, fp);
 
     fclose(fp); 
     
@@ -111,3 +128,4 @@ int main(int argc, char** argv)
     
     return 0;
 }
+

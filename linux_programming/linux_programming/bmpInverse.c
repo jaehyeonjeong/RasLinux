@@ -86,24 +86,6 @@ int main(int argc, char** argv)
 	for(i = 0 ; i < height; i++) { 
 		index = (height-i-1) * size; 
 		for(j = 0 ; j < width; j++) { 
-			double new_x;
-			double new_y;
-			new_x = (i-centerX)*cos_value - (j-centerY)*sin_value + centerX;
-			new_y = (i-centerX)*sin_value + (j-centerY)*cos_value + centerY; 
-			
-			if(new_x <0 || new_x > height) {
-				outimg[index+3*j+0] = 0xff;
-				outimg[index+3*j+1] = 0xff;
-				outimg[index+3*j+2] = 0;
-			} else if (new_y <0 || new_y > width) {
-				outimg[index+3*j+0] = 0;
-				outimg[index+3*j+1] = 0xff;
-				outimg[index+3*j+2] = 0;
-			} else {
-				outimg[index+3*j+0] = inimg[(int)(height-new_x-1)*size+(int)new_y*3+0];
-				outimg[index+3*j+1] = inimg[(int)(height-new_x-1)*size+(int)new_y*3+1];
-				outimg[index+3*j+2] = inimg[(int)(height-new_x-1)*size+(int)new_y*3+2];
-			}
 		};
 	};
 	

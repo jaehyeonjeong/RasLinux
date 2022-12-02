@@ -18,8 +18,10 @@ int main(int argc, char** argv)
     BITMAPINFOHEADER bmpInfoHeader;     /* BMP IMAGE INFO */
     RGBQUAD *palrgb;
     ubyte *inimg, *outimg;
-    int x, y, z, elemSize;
+    int x, y, z; 
+	float elemSize;
 
+	
     if(argc != 3) {
         fprintf(stderr, "usage : %s input.bmp output.bmp\n", argv[0]);
         return -1;
@@ -53,6 +55,8 @@ int main(int argc, char** argv)
     printf("Image Size : %d\n", bmpInfoHeader.SizeImage );
     printf("Color : %d\n", bmpInfoHeader.biClrUsed);
 
+	if(bmpInfoHeader.biBitCount == 8 && bmpInfoHeader.biClrUsed == 0)
+			bmpInfoHeader.biClrUsed = 256;
     palrgb = (RGBQUAD*)malloc(sizeof(RGBQUAD)*bmpInfoHeader.biClrUsed);
     fread(palrgb, sizeof(RGBQUAD), bmpInfoHeader.biClrUsed, fp); 
 
@@ -68,19 +72,22 @@ int main(int argc, char** argv)
     
     fclose(fp);
     
-    elemSize = 3; //bmpInfoHeader.biBitCount / 8;
+    elemSize = (float)bmpInfoHeader.biBitCount / 8;
     int pos = 0; 
 
-    for(x = 0; x < bmpInfoHeader.biWidth*bmpInfoHeader.biHeight/8; x++) { 
-        for(int i = 7; i >= 0; --i) { //8자리 숫자까지 나타냄
-             int num = inimg[x]; 
-             int res = num >> i & 1;
-             outimg[pos++]=palrgb[res].rgbBlue;
-             outimg[pos++]=palrgb[res].rgbGreen;
-             outimg[pos++]=palrgb[res].rgbRed;
-        }
-    }         
-     
+	int mask = 0;
+	for(int x = 0; x < bmpInfoHeader.biBitCount; x++)
+		mask |= 1 << x;
+	printf("mask : %d\n", mask);	
+ 	for(x = 0; x < bmpInfoHeader.biWidth*bmpInfoHeader.biHeight*elemSize; x++) { 
+        for(int i = 8 - bmpInfoHeader.biBitCount; i >= 0; i-=bmpInfoHeader.biBitCount){
+			int res = inimg[x] >> i & mask;
+         	outimg[pos++]=palrgb[res].rgbBlue;
+         	outimg[pos++]=palrgb[res].rgbGreen;
+        	outimg[pos++]=palrgb[res].rgbRed;
+	    }
+	}
+	     
     /***** write bmp *****/ 
     if((fp=fopen(argv[2], "wb"))==NULL) { 
         fprintf(stderr, "Error : Failed to open file...₩n"); 

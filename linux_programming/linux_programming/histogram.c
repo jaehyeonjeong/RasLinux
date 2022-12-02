@@ -58,7 +58,7 @@ printf("Image width : %d, height : %d(%d)\n", bmpInfoHeader.biWidth, bmpInfoHead
 			g = (float)inimg[index+3*j+1];
 			b = (float)inimg[index+3*j+0];
 			//그레이 스케일로 변환하는 공식
-			gray = (r*0.3F)+(g*0.59F)+(b*0.11F);
+			gray = (r*0.3F)+(g*0.65F)+(b*0.25F);
 			histogram[(unsigned char)(gray)] += 1;
 			outimg[index+3*j] = outimg[index+3*j+1] = outimg[index+3*j+2] = gray;
 		};
